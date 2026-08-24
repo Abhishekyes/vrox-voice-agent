@@ -41,6 +41,18 @@ if ! command -v ollama >/dev/null 2>&1; then
     fi
 fi
 
+# --- 2.5 Check ffmpeg (needed to decode audio for the LAN/web mode) ---
+if ! command -v ffmpeg >/dev/null 2>&1; then
+    echo "[Vrox] ffmpeg not found."
+    if command -v brew >/dev/null 2>&1; then
+        echo "[Vrox] Installing ffmpeg via Homebrew..."
+        brew install ffmpeg
+    else
+        echo "[Vrox] ffmpeg is optional for CLI mode but required for the LAN"
+        echo "       web mode. Install it later with: brew install ffmpeg"
+    fi
+fi
+
 # --- 3. Create the virtual environment (once) ---
 if [ ! -d ".venv" ]; then
     echo "[Vrox] Setting up Python environment for the first time..."
