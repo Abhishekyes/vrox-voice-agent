@@ -1,0 +1,44 @@
+name: CI
+
+# Runs on every push / PR. This is intentionally the whole "CI/CD" story for
+# this project: lint + unit tests. There is no deploy job, because the
+# thing being built is a LOCAL voice + desktop-control agent (it needs a
+# microphone, speakers, and permission to open apps on a real machine) —
+# that class of app cannot be meaningfully "deployed" to a server. See
+# docs/ARCHITECTURE.md ("Why no live deployment") for the full reasoning.
+#
+# What this pipeline proves on every commit:
+#   1. The code is syntactically valid and passes lint rules (ruff).
+#   2. The pure-logic parts (intent routing, action dispatch) still behave
+#      correctly, verified with fast, offline unit tests that mock out
+#      anything that needs real hardware/network (mic, OS process control,
+#      the LLM, TTS).
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+
+jobs:
+  lint-and-test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+          cache: "pip"
+
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install pytest ruff psutil pywhatkit
+
+      - name: Lint (ruff)
+        run: ruff check src/ tests/ vrox_cli.py
+
+      - name: Run unit tests
+        run: pytest tests/ -v
