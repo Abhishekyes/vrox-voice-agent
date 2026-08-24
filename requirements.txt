@@ -8,8 +8,8 @@ ollama==0.4.7
 # --- Speech-to-Text (offline, free) ---
 faster-whisper==1.1.0
 sounddevice==0.5.1
-numpy==1.26.4
-scipy==1.13.1
+numpy>=1.26.4
+scipy>=1.13.1
 
 # --- Text-to-Speech (free, natural-sounding, needs internet; offline fallback included) ---
 edge-tts==6.1.19
