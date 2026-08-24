@@ -63,8 +63,19 @@ def test_execute_raises_on_chat_intent():
         pass
 
 
-@patch("pywhatkit.playonyt")
-def test_play_media_uses_pywhatkit(mock_playonyt):
-    result = play_media("believer imagine dragons")
-    mock_playonyt.assert_called_once_with("believer imagine dragons")
+def test_play_media_uses_pywhatkit():
+    # play_media() does `import pywhatkit` lazily, inside the function (see
+    # src/actions.py) — specifically so this module doesn't need a real
+    # display just to be imported. pywhatkit pulls in pyautogui, which
+    # pulls in mouseinfo, which needs a real GUI display (DISPLAY env var)
+    # to even import on Linux — something a headless CI runner doesn't
+    # have. Rather than patching the real package (which would force that
+    # import chain to run), we inject a fake module into sys.modules so
+    # `import pywhatkit` inside play_media() resolves to our mock instead
+    # of ever touching the real package.
+    fake_pywhatkit = MagicMock()
+    with patch.dict("sys.modules", {"pywhatkit": fake_pywhatkit}):
+        result = play_media("believer imagine dragons")
+
+    fake_pywhatkit.playonyt.assert_called_once_with("believer imagine dragons")
     assert "bajaa raha hoon" in result
