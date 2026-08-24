@@ -1,0 +1,33 @@
+# Vrox Voice Assistant — dependencies
+# Everything here is free / open-source. No paid API keys are required
+# for the default setup (see docs/SETUP.md for the optional ElevenLabs upgrade).
+
+# --- Local LLM client (talks to Ollama running on your machine) ---
+ollama==0.4.7
+
+# --- Speech-to-Text (offline, free) ---
+faster-whisper==1.1.0
+sounddevice==0.5.1
+numpy==1.26.4
+scipy==1.13.1
+
+# --- Text-to-Speech (free, natural-sounding, needs internet; offline fallback included) ---
+edge-tts==6.1.19
+pyttsx3==2.98
+
+# --- Audio playback ---
+pygame==2.6.1
+
+# --- Web server for LAN access (talk to Vrox from your phone on the same WiFi) ---
+fastapi==0.115.6
+uvicorn[standard]==0.34.0
+python-multipart==0.0.20
+websockets==14.1
+
+# --- System / browser automation ---
+psutil==6.1.1
+pywhatkit==5.4
+
+# --- Dev / testing ---
+pytest==8.3.4
+ruff==0.8.6
