@@ -107,7 +107,12 @@ engine — there's no way to accidentally get billed.
   finished, and that the Ollama app/service is running in the background.
 - **No sound / mic not detected (CLI mode)** — check your OS's default
   input/output device; `sounddevice` uses whatever your OS considers
-  default.
+  default. Vrox already tries several sample-rate/format combinations
+  automatically before giving up (some Windows audio drivers reject the
+  "obvious" one), but if it still can't open the mic, run
+  `python check_mic.py` for a detailed report of exactly which
+  configuration is failing and why — much faster to debug from than a
+  bare error message.
 - **Phone can't reach the server** — confirm both devices are on the same
   WiFi network (not a guest network that isolates clients), and that your
   PC's firewall allows inbound connections on port 8000.
