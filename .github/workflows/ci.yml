@@ -35,7 +35,13 @@ jobs:
       - name: Install dependencies
         run: |
           python -m pip install --upgrade pip
-          pip install pytest ruff psutil pywhatkit
+          pip install pytest ruff psutil
+          # Note: pywhatkit is NOT installed here on purpose. It transitively
+          # pulls in pyautogui -> mouseinfo, which needs a real GUI display
+          # to even import on Linux - something headless CI runners don't
+          # have. The test for play_media() injects a fake pywhatkit module
+          # via sys.modules instead of importing the real package, so no
+          # display-dependent import ever runs in CI (see tests/test_actions.py).
 
       - name: Lint (ruff)
         run: ruff check src/ tests/ vrox_cli.py
