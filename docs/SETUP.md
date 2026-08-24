@@ -44,7 +44,18 @@ cp .env.example .env
 ```bash
 python vrox_cli.py
 ```
-Press Enter, speak for ~5 seconds, listen to the reply, repeat.
+Fully hands-free — no button, no Enter key. Just start talking whenever
+you're ready; Vrox detects when you start/stop speaking on its own.
+
+**No microphone on this machine? Text mode:**
+```bash
+python vrox_cli.py --text
+```
+Skips loading Whisper and the mic entirely — type your messages instead
+of speaking them. Vrox still replies out loud (via whichever
+`VROX_TTS_ENGINE` is set in `.env`) and in text. Handy for quickly
+testing the personality/replies on a laptop or VM that has no working
+mic, or when you'd rather not talk out loud.
 
 **LAN mode — control your PC from your phone:**
 ```bash
