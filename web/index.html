@@ -152,7 +152,7 @@
 <body>
   <div class="card">
     <h1>🎙️ Vrox</h1>
-    <p class="subtitle">Your friendly voice companion — hold the button and speak, in Hindi or English.</p>
+    <p class="subtitle">Your friendly voice companion — tap the button, speak, tap again, in Hindi or English.</p>
 
     <div id="avatarWrap">
       <div id="avatarRing"></div>
@@ -191,7 +191,7 @@
       </svg>
     </div>
 
-    <button id="talkBtn">🎤 Hold to talk</button>
+    <button id="talkBtn">🎤 Tap to talk</button>
     <div id="status">Ready</div>
 
     <div id="transcriptBubble" class="bubble" style="display:none;">
@@ -218,6 +218,7 @@ const player = document.getElementById('player');
 
 let mediaRecorder;
 let chunks = [];
+let isRecording = false;
 
 function setAvatarState(state) {
   // states: idle | listening | thinking | talking
@@ -225,17 +226,29 @@ function setAvatarState(state) {
   if (state !== 'idle') avatarWrap.classList.add(state);
 }
 
+// Tap-to-toggle rather than press-and-hold: a hold gesture (mousedown ->
+// mouseup) doesn't survive the browser's own microphone permission popup on
+// the very first use — that native dialog steals the mouseup, so the page
+// never sees it, recording never stops, and nothing gets sent. A plain
+// click on/click off has no such timing dependency.
 async function startRecording() {
-  const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
-  mediaRecorder = new MediaRecorder(stream);
-  chunks = [];
-  mediaRecorder.ondataavailable = (e) => chunks.push(e.data);
-  mediaRecorder.onstop = onRecordingStop;
-  mediaRecorder.start();
-  talkBtn.classList.add('recording');
-  talkBtn.textContent = '🔴 Listening...';
-  statusEl.textContent = 'Listening...';
-  setAvatarState('listening');
+  try {
+    const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+    mediaRecorder = new MediaRecorder(stream);
+    chunks = [];
+    mediaRecorder.ondataavailable = (e) => chunks.push(e.data);
+    mediaRecorder.onstop = onRecordingStop;
+    mediaRecorder.start();
+    talkBtn.classList.add('recording');
+    talkBtn.textContent = '🔴 Tap to stop';
+    statusEl.textContent = 'Listening...';
+    setAvatarState('listening');
+  } catch (err) {
+    console.error(err);
+    isRecording = false;
+    statusEl.textContent = 'Could not access the microphone — check your browser\'s mic permission for this page.';
+    setAvatarState('idle');
+  }
 }
 
 function stopRecording() {
@@ -244,7 +257,7 @@ function stopRecording() {
     mediaRecorder.stream.getTracks().forEach((t) => t.stop());
   }
   talkBtn.classList.remove('recording');
-  talkBtn.textContent = '🎤 Hold to talk';
+  talkBtn.textContent = '🎤 Tap to talk';
 }
 
 async function onRecordingStop() {
@@ -292,11 +305,15 @@ player.addEventListener('pause', () => {
   setAvatarState('idle');
 });
 
-talkBtn.addEventListener('mousedown', startRecording);
-talkBtn.addEventListener('touchstart', (e) => { e.preventDefault(); startRecording(); });
-talkBtn.addEventListener('mouseup', stopRecording);
-talkBtn.addEventListener('mouseleave', () => { if (mediaRecorder && mediaRecorder.state === 'recording') stopRecording(); });
-talkBtn.addEventListener('touchend', (e) => { e.preventDefault(); stopRecording(); });
+talkBtn.addEventListener('click', () => {
+  if (!isRecording) {
+    isRecording = true;
+    startRecording();
+  } else {
+    isRecording = false;
+    stopRecording();
+  }
+});
 </script>
 </body>
 </html>
