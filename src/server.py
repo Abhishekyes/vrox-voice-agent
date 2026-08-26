@@ -34,8 +34,8 @@ from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import FileResponse, JSONResponse
 from fastapi.staticfiles import StaticFiles
 
+from src.config import settings
 from src.pipeline import VroxPipeline
-from src.stt import SpeechToText
 from src.tts import TextToSpeech
 
 logging.basicConfig(level=logging.INFO, format="%(asctime)s %(name)s: %(message)s")
@@ -56,7 +56,12 @@ _web_dir = Path(__file__).resolve().parent.parent / "web"
 
 # Components are created once at startup and reused across requests — the
 # Whisper/LLM model load is the slow part, so we pay that cost exactly once.
-_stt: SpeechToText | None = None
+# Typed loosely on purpose: this holds either the local implementation or the
+# Groq-backed one, chosen by VROX_STT_PROVIDER / VROX_LLM_PROVIDER (see
+# src/config.py). Only the provider actually selected gets imported, so a
+# cloud deployment (VROX_STT_PROVIDER=groq) never pulls in faster-whisper /
+# sounddevice, and a local run never needs a Groq key.
+_stt = None
 _tts: TextToSpeech | None = None
 _pipeline: VroxPipeline | None = None
 
@@ -64,8 +69,17 @@ _pipeline: VroxPipeline | None = None
 @app.on_event("startup")
 def _load_models() -> None:
     global _stt, _tts, _pipeline
-    log.info("Loading Vrox's brain, ears, and voice...")
-    _stt = SpeechToText()
+    log.info("Loading Vrox's brain, ears, and voice (stt=%s, llm=%s)...", settings.stt_provider, settings.llm_provider)
+
+    if settings.stt_provider == "groq":
+        from src.stt_cloud import GroqSpeechToText
+
+        _stt = GroqSpeechToText()
+    else:
+        from src.stt import SpeechToText
+
+        _stt = SpeechToText()
+
     _tts = TextToSpeech()
     _pipeline = VroxPipeline()
     log.info("Vrox is ready and listening on the network.")

@@ -28,6 +28,33 @@ class Settings:
     # --- Ears (STT) ---
     whisper_model: str = os.getenv("VROX_WHISPER_MODEL", "small")
 
+    # --- Optional cloud providers (used only for the public web demo) ---
+    # Default is "local": Ollama for the brain, on-device Whisper for the ears —
+    # $0, offline, nothing leaves your machine. Set these to "groq" only for a
+    # hosted deployment (e.g. Hugging Face Spaces) that has no GPU/RAM to spare
+    # for a local model. Groq's free tier needs a key from
+    # https://console.groq.com/keys but costs nothing for normal demo traffic.
+    llm_provider: str = os.getenv("VROX_LLM_PROVIDER", "local")  # "local" or "groq"
+    stt_provider: str = os.getenv("VROX_STT_PROVIDER", "local")  # "local" or "groq"
+    groq_api_key: str = os.getenv("GROQ_API_KEY", "")
+    groq_llm_model: str = os.getenv("GROQ_LLM_MODEL", "llama-3.1-8b-instant")
+    groq_whisper_model: str = os.getenv("GROQ_WHISPER_MODEL", "whisper-large-v3-turbo")
+
+    # --- Demo mode (public web deployment only) ---
+    # System actions (open_app/close_app/play_media/etc.) run subprocess/psutil
+    # calls on whatever machine the server process is on. That's exactly what
+    # you want when it's YOUR PC — "open chrome" should open Chrome for you.
+    # It makes no sense on a public cloud demo: there's no GUI in the
+    # container, and letting anonymous visitors trigger subprocess calls on a
+    # shared public server is just bad practice regardless. Demo mode swaps
+    # those actions for a short explanatory reply instead of executing them.
+    # Defaults to on automatically whenever a cloud provider is selected;
+    # override explicitly with VROX_DEMO_MODE=false/true if you ever want to
+    # decouple the two.
+    demo_mode: bool = os.getenv(
+        "VROX_DEMO_MODE", "true" if os.getenv("VROX_LLM_PROVIDER", "local") == "groq" else "false"
+    ).lower() == "true"
+
     # --- Voice (TTS) ---
     tts_engine: str = os.getenv("VROX_TTS_ENGINE", "edge")  # "edge" or "offline"
     tts_voice: str = os.getenv("VROX_TTS_VOICE", "en-IN-PrabhatNeural")

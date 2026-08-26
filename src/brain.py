@@ -57,3 +57,17 @@ class Brain:
         self.memory.add_assistant(reply_text)
         log.info("Brain reply: %s", reply_text)
         return reply_text
+
+
+def create_brain(memory: ConversationMemory | None = None):
+    """
+    Factory that returns the right brain implementation for `VROX_LLM_PROVIDER`
+    — the local Ollama-backed `Brain` by default, or `GroqBrain` for a hosted
+    deployment. Both expose the same `.reply(user_text, action_result=None)`
+    method, so every caller (CLI, server) can stay provider-agnostic.
+    """
+    if settings.llm_provider == "groq":
+        from src.brain_cloud import GroqBrain
+
+        return GroqBrain(memory)
+    return Brain(memory)
