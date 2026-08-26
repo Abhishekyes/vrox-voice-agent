@@ -133,11 +133,28 @@ deployable:
   (this is exactly how Home Assistant, Plex, and most self-hosted smart
   -home software work).
 
-If a future version needed a truly cloud-hosted piece, the natural split
-would be: keep voice + system control local, but move the **Brain** behind
-a small hosted API (e.g. a free-tier Render/Railway service wrapping a
-hosted or local LLM) so multiple devices could share one "conversation
-brain." That's flagged in the README as a natural v2 extension.
+There is one cloud-hosted piece: a public, chat-only **demo** deployment
+(see [docs/DEPLOY.md](DEPLOY.md)). It follows exactly the split described
+above — voice + system control stay local-only concepts — by swapping just
+two components behind the same interfaces, selected at runtime by
+`VROX_LLM_PROVIDER` / `VROX_STT_PROVIDER` in `src/config.py`:
+
+- `src/brain_cloud.py` — `GroqBrain`, same `.reply()` shape as `Brain`, but
+  calling Groq's free hosted API instead of a local Ollama model (no
+  GPU/RAM on a free box for a 7B model).
+- `src/stt_cloud.py` — `GroqSpeechToText`, same `transcribe_file()` shape
+  as `SpeechToText`, using Groq's free hosted Whisper endpoint instead of
+  loading `faster-whisper` locally.
+
+`src/pipeline.py` also checks `settings.demo_mode` (auto-on whenever the
+Groq provider is selected) and skips actually running `src/actions.py`'s
+subprocess/psutil calls in that mode — there's no desktop behind a public
+server to control, and executing system calls triggered by anonymous
+internet visitors would be a bad idea regardless of whether anything useful
+would happen. The LLM still replies, just explaining that the action only
+works when Vrox runs on your own machine. `vrox_cli.py` and the local LAN
+server never touch any of this — they always use the local, free, offline
+path by default.
 
 ## Known limitations (good interview material — shows self-awareness)
 
