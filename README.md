@@ -16,6 +16,11 @@ to it from your phone over your home WiFi.
 See [docs/SETUP.md](docs/SETUP.md#cost-breakdown) for the exact breakdown
 and the one optional paid upgrade path (ElevenLabs voices).
 
+**🔗 Try the live demo:** _add your deployed link here after following
+[docs/DEPLOY.md](docs/DEPLOY.md)_ — a public, chat-only version anyone can
+open in a browser, no install needed (see the note below on why system
+control is local-only).
+
 ---
 
 ## What it can do
@@ -101,22 +106,32 @@ vrox-voice-agent/
 └── pyproject.toml
 ```
 
-## Why no "24/7 live" cloud deployment?
+## Why the live demo can only chat, not control your screen
 
 A voice agent that opens apps and controls a screen has to run **on the
 machine it's controlling** — it needs a real microphone, real speakers, and
 OS-level permission to launch/close programs. That can't be hosted on a
-generic cloud server the way a website can. Instead, this project deploys
-what's honestly deployable:
+generic cloud server the way a website can. So this project deploys what's
+honestly deployable, as two separate things:
 
 - The **source code + CI pipeline** live on GitHub (lint + tests run on
   every push).
-- The **app itself** runs locally on your PC, and is reachable from any
-  other device on your **home WiFi** through the built-in web server —
-  which is a genuinely useful, real deployment pattern (the same one smart
-  -home hubs, Home Assistant, Plex, etc. all use).
+- The **app itself**, in full "control my PC" form, runs locally on your
+  machine, and is reachable from any other device on your **home WiFi**
+  through the built-in web server — a genuinely useful, real deployment
+  pattern (the same one smart-home hubs, Home Assistant, Plex, etc. all
+  use).
+- A **public chat-only demo** ([docs/DEPLOY.md](docs/DEPLOY.md)) also runs
+  in the cloud for free (Hugging Face Spaces / Render + Groq's free API
+  instead of a local model) so anyone can try the conversation and
+  personality from a link — with system actions ("open Chrome", "play
+  x on YouTube") intentionally turned into an explanation instead of a
+  real action, since there's no desktop behind a public server to control,
+  and letting strangers trigger subprocess calls on a shared server is a
+  bad idea on principle regardless.
 
-This distinction — and why it matters — is explained in more depth in
+This distinction — deployable-for-real-use vs. hostable-as-a-demo — is
+explained in more depth in
 [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md#why-no-live-cloud-deployment),
 and is worth being able to explain confidently in an interview: it shows
 you understand the difference between "deployable" and "hostable" systems.
