@@ -51,7 +51,14 @@ class Brain:
             )
         messages += self.memory.history()
 
-        response = self._client.chat(model=settings.llm_model, messages=messages)
+        # num_predict caps generation length — the biggest lever on local CPU
+        # inference latency, since the model keeps generating tokens until it
+        # either stops on its own or hits this cap. See settings.llm_max_tokens.
+        response = self._client.chat(
+            model=settings.llm_model,
+            messages=messages,
+            options={"num_predict": settings.llm_max_tokens},
+        )
         reply_text = response["message"]["content"].strip()
 
         self.memory.add_assistant(reply_text)

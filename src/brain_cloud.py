@@ -56,7 +56,7 @@ class GroqBrain:
                 "model": settings.groq_llm_model,
                 "messages": messages,
                 "temperature": 0.7,
-                "max_tokens": 300,
+                "max_tokens": settings.llm_max_tokens,
             },
             timeout=30,
         )
