@@ -1,0 +1,295 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>Vrox — Voice Interview Coach</title>
+<style>
+  :root{
+    --bg1:#0f0c29; --bg2:#302b63; --bg3:#1b1440;
+    --accent1:#8A2BE2; --accent2:#FF00C8; --accent3:#00F5FF;
+    --card:#181433cc; --text:#e8e9fb; --muted:#9aa0c9;
+  }
+  *{box-sizing:border-box;}
+  body{
+    margin:0; min-height:100vh; font-family:'Segoe UI',Arial,sans-serif; color:var(--text);
+    background:linear-gradient(135deg,var(--bg1) 0%,var(--bg2) 45%,var(--bg3) 100%);
+    display:flex; flex-direction:column; align-items:center; padding:32px 16px 60px;
+  }
+  h1{
+    font-size:2.4em; margin:6px 0 2px; text-align:center; font-weight:700;
+    background:linear-gradient(90deg,var(--accent1),var(--accent2),var(--accent3));
+    -webkit-background-clip:text; background-clip:text; color:transparent;
+    background-size:200% auto; animation:shine 6s linear infinite;
+  }
+  @keyframes shine{0%{background-position:0% center;}100%{background-position:200% center;}}
+  .sub{color:var(--muted); text-align:center; margin-bottom:28px; font-size:0.95em;}
+  .card{
+    background:var(--card); border:1px solid #3a3570; border-radius:16px; padding:24px;
+    width:100%; max-width:640px; margin-bottom:20px; backdrop-filter:blur(6px);
+    box-shadow:0 10px 40px #00000055;
+  }
+  label{display:block; font-size:0.85em; color:var(--muted); margin-bottom:6px;}
+  input[type=password], input[type=text], select{
+    width:100%; padding:11px 14px; border-radius:10px; border:1px solid #4a4580;
+    background:#0e0b26; color:var(--text); font-size:0.95em; outline:none;
+  }
+  input:focus, select:focus{border-color:var(--accent3);}
+  .row{display:flex; gap:12px; margin-bottom:14px; flex-wrap:wrap;}
+  .row > div{flex:1; min-width:180px;}
+  .hint{font-size:0.78em; color:var(--muted); margin-top:6px; line-height:1.5;}
+  .hint a{color:var(--accent3);}
+  button{
+    cursor:pointer; border:none; border-radius:10px; padding:13px 22px; font-size:1em;
+    font-weight:600; transition:transform .15s, box-shadow .15s;
+  }
+  button:disabled{opacity:0.45; cursor:not-allowed;}
+  #startBtn{background:linear-gradient(90deg,var(--accent1),var(--accent2)); color:#fff; flex:1;}
+  #stopBtn{background:#2a2555; color:var(--text); border:1px solid #55508f;}
+  button:not(:disabled):hover{transform:translateY(-1px); box-shadow:0 6px 18px #00000066;}
+  .status-bar{display:flex; align-items:center; gap:10px; margin:18px 0 6px;}
+  .dot{width:11px; height:11px; border-radius:50%; background:#555; transition:background .3s;}
+  .dot.live{background:#39ff88; box-shadow:0 0 10px #39ff8899; animation:pulse 1.4s infinite;}
+  .dot.err{background:#ff4d6d;}
+  @keyframes pulse{0%,100%{opacity:1;}50%{opacity:0.4;}}
+  #statusText{font-size:0.92em; color:var(--muted);}
+  #transcript{
+    height:320px; overflow-y:auto; background:#0e0b26; border-radius:12px; padding:16px;
+    border:1px solid #3a3570; font-size:0.93em; line-height:1.55;
+  }
+  .msg{margin-bottom:12px; padding:10px 14px; border-radius:10px; max-width:88%;}
+  .msg.user{background:#26205a; margin-left:auto; text-align:right;}
+  .msg.assistant{background:#1f3a4d; margin-right:auto;}
+  .msg .role{display:block; font-size:0.72em; color:var(--muted); margin-bottom:3px;}
+  footer{color:var(--muted); font-size:0.8em; text-align:center; margin-top:10px;}
+  footer a{color:var(--accent3); text-decoration:none;}
+</style>
+</head>
+<body>
+
+  <h1>🎙️ Vrox — Voice Interview Coach</h1>
+  <p class="sub">Practice real mock interviews out loud. Vrox listens, asks follow-ups, and gives you feedback — live, by voice.</p>
+
+  <div class="card">
+    <div class="row">
+      <div style="flex:2;">
+        <label for="apiKey">Your OpenAI API key (stays in this browser tab only — never sent to anyone but OpenAI)</label>
+        <input type="password" id="apiKey" placeholder="sk-..." autocomplete="off"/>
+      </div>
+      <div>
+        <label for="role">Role you're preparing for</label>
+        <input type="text" id="role" placeholder="e.g. Data Scientist" value="Data Scientist"/>
+      </div>
+    </div>
+    <div class="row">
+      <div>
+        <label for="difficulty">Interview style</label>
+        <select id="difficulty">
+          <option value="friendly">Friendly warm-up</option>
+          <option value="standard" selected>Standard</option>
+          <option value="tough">Tough / senior bar-raiser</option>
+        </select>
+      </div>
+      <div>
+        <label for="voice">Voice</label>
+        <select id="voice">
+          <option value="marin" selected>Marin (calm, deep)</option>
+          <option value="cedar">Cedar</option>
+          <option value="alloy">Alloy</option>
+        </select>
+      </div>
+    </div>
+    <div class="row">
+      <button id="startBtn">🎤 Start Mock Interview</button>
+      <button id="stopBtn" disabled>■ Stop</button>
+    </div>
+    <p class="hint">
+      Your key is used directly from this page to call OpenAI's Realtime API over WebRTC — it never
+      passes through any server of ours. Get a key at
+      <a href="https://platform.openai.com/api-keys" target="_blank" rel="noopener">platform.openai.com/api-keys</a>.
+      Closing or refreshing this tab clears it.
+    </p>
+  </div>
+
+  <div class="card">
+    <div class="status-bar">
+      <div class="dot" id="statusDot"></div>
+      <span id="statusText">Not connected</span>
+    </div>
+    <div id="transcript"><div class="hint" style="text-align:center; margin-top:130px;">Your live transcript will appear here once the interview starts.</div></div>
+  </div>
+
+  <footer>Vrox Voice Interview Coach · runs entirely in your browser via OpenAI's Realtime API</footer>
+
+<script>
+let pc = null;
+let dc = null;
+let micStream = null;
+let assistantBuffer = "";
+let assistantMsgEl = null;
+
+const startBtn = document.getElementById('startBtn');
+const stopBtn = document.getElementById('stopBtn');
+const statusDot = document.getElementById('statusDot');
+const statusText = document.getElementById('statusText');
+const transcriptEl = document.getElementById('transcript');
+
+function setStatus(text, mode){
+  statusText.textContent = text;
+  statusDot.className = 'dot' + (mode ? ' ' + mode : '');
+}
+
+function clearTranscriptPlaceholder(){
+  if (transcriptEl.children.length === 1 && transcriptEl.children[0].classList.contains('hint')){
+    transcriptEl.innerHTML = '';
+  }
+}
+
+function addMessage(role, text){
+  clearTranscriptPlaceholder();
+  const div = document.createElement('div');
+  div.className = 'msg ' + role;
+  div.innerHTML = '<span class="role">' + (role === 'user' ? 'You' : 'Vrox') + '</span>' + text;
+  transcriptEl.appendChild(div);
+  transcriptEl.scrollTop = transcriptEl.scrollHeight;
+  return div;
+}
+
+function instructionsFor(role, difficulty){
+  const styleMap = {
+    friendly: "Keep the tone especially warm and encouraging, ease them in with simpler questions first, and be generous with positive feedback.",
+    standard: "Keep a balanced, professional interviewer tone — supportive but honest, the way a good real interviewer would be.",
+    tough: "Play a tough, senior bar-raiser interviewer: push back, ask sharp follow-up questions, don't let vague answers slide, but stay respectful and never rude."
+  };
+  return `You are Vrox, a warm but grounded senior interviewer with calm, deep, measured energy — never hyper or bubbly. `
+    + `You are conducting a live mock job interview with the user for the role of "${role}". `
+    + styleMap[difficulty] + ` `
+    + `Rules: ask ONE interview question at a time (mix behavioral and role-specific technical questions relevant to "${role}"), `
+    + `then actually wait for their spoken answer. After each answer, give brief, specific, constructive feedback (max 2-3 sentences: `
+    + `one thing that was strong, one concrete thing to improve), then smoothly ask the next question. `
+    + `Speak naturally in whichever mix of Hindi and English (Hinglish) the user leans towards, code-switching naturally if they do. `
+    + `Keep every turn short and conversational — this is spoken, not an essay. Start now by briefly introducing yourself in one sentence `
+    + `and asking your first question.`;
+}
+
+async function startInterview(){
+  const apiKey = document.getElementById('apiKey').value.trim();
+  if (!apiKey){ alert('Please paste your OpenAI API key first.'); return; }
+  const role = document.getElementById('role').value.trim() || 'Data Scientist';
+  const difficulty = document.getElementById('difficulty').value;
+  const voice = document.getElementById('voice').value;
+
+  startBtn.disabled = true;
+  setStatus('Requesting session…');
+
+  try{
+    const secretResp = await fetch('https://api.openai.com/v1/realtime/client_secrets', {
+      method: 'POST',
+      headers: {
+        'Authorization': 'Bearer ' + apiKey,
+        'Content-Type': 'application/json'
+      },
+      body: JSON.stringify({
+        session: {
+          type: 'realtime',
+          model: 'gpt-realtime',
+          instructions: instructionsFor(role, difficulty),
+          audio: { output: { voice: voice } }
+        }
+      })
+    });
+
+    if (!secretResp.ok){
+      const errText = await secretResp.text();
+      throw new Error('Could not create session (' + secretResp.status + '): ' + errText.slice(0,300));
+    }
+    const secretData = await secretResp.json();
+    const ephemeralKey = secretData.value;
+
+    setStatus('Requesting microphone…');
+    micStream = await navigator.mediaDevices.getUserMedia({ audio: true });
+
+    pc = new RTCPeerConnection();
+    pc.addTrack(micStream.getTracks()[0], micStream);
+
+    const remoteAudio = new Audio();
+    remoteAudio.autoplay = true;
+    pc.ontrack = (e) => { remoteAudio.srcObject = e.streams[0]; };
+
+    dc = pc.createDataChannel('oai-events');
+    dc.addEventListener('open', () => {
+      setStatus('Connected — interview in progress', 'live');
+    });
+    dc.addEventListener('message', handleServerEvent);
+
+    const offer = await pc.createOffer();
+    await pc.setLocalDescription(offer);
+
+    setStatus('Connecting to Vrox…');
+    const sdpResp = await fetch('https://api.openai.com/v1/realtime/calls', {
+      method: 'POST',
+      body: offer.sdp,
+      headers: {
+        'Authorization': 'Bearer ' + ephemeralKey,
+        'Content-Type': 'application/sdp'
+      }
+    });
+
+    if (!sdpResp.ok){
+      const errText = await sdpResp.text();
+      throw new Error('Call setup failed (' + sdpResp.status + '): ' + errText.slice(0,300));
+    }
+    const answerSdp = await sdpResp.text();
+    await pc.setRemoteDescription({ type: 'answer', sdp: answerSdp });
+
+    stopBtn.disabled = false;
+  } catch(err){
+    console.error(err);
+    setStatus('Error: ' + err.message, 'err');
+    startBtn.disabled = false;
+    cleanup();
+  }
+}
+
+function handleServerEvent(e){
+  let event;
+  try { event = JSON.parse(e.data); } catch { return; }
+
+  if (event.type === 'response.audio_transcript.delta'){
+    if (!assistantMsgEl){ assistantMsgEl = addMessage('assistant', ''); assistantBuffer = ''; }
+    assistantBuffer += event.delta;
+    assistantMsgEl.innerHTML = '<span class="role">Vrox</span>' + assistantBuffer;
+    transcriptEl.scrollTop = transcriptEl.scrollHeight;
+  }
+  if (event.type === 'response.audio_transcript.done' || event.type === 'response.done'){
+    assistantMsgEl = null;
+    assistantBuffer = '';
+  }
+  if (event.type === 'conversation.item.input_audio_transcription.completed'){
+    addMessage('user', event.transcript || '(spoke)');
+  }
+  if (event.type === 'error'){
+    console.error('Realtime error event', event);
+    setStatus('Error: ' + (event.error && event.error.message ? event.error.message : 'unknown'), 'err');
+  }
+}
+
+function cleanup(){
+  if (dc){ try{ dc.close(); }catch(e){} dc = null; }
+  if (pc){ try{ pc.close(); }catch(e){} pc = null; }
+  if (micStream){ micStream.getTracks().forEach(t => t.stop()); micStream = null; }
+  assistantMsgEl = null; assistantBuffer = '';
+}
+
+function stopInterview(){
+  cleanup();
+  setStatus('Not connected');
+  startBtn.disabled = false;
+  stopBtn.disabled = true;
+}
+
+startBtn.addEventListener('click', startInterview);
+stopBtn.addEventListener('click', stopInterview);
+</script>
+</body>
+</html>
