@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8"/>
 <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-<title>Vrox — Voice Interview Coach</title>
+<title>Vrox — Your Voice Companion</title>
 <style>
   :root{
     --bg1:#0f0c29; --bg2:#302b63; --bg3:#1b1440;
@@ -23,7 +23,7 @@
     background-size:200% auto; animation:shine 6s linear infinite;
   }
   @keyframes shine{0%{background-position:0% center;}100%{background-position:200% center;}}
-  .sub{color:var(--muted); text-align:center; margin-bottom:28px; font-size:0.95em;}
+  .sub{color:var(--muted); text-align:center; margin-bottom:28px; font-size:0.95em; max-width:560px;}
   .card{
     background:var(--card); border:1px solid #3a3570; border-radius:16px; padding:24px;
     width:100%; max-width:640px; margin-bottom:20px; backdrop-filter:blur(6px);
@@ -67,8 +67,8 @@
 </head>
 <body>
 
-  <h1>🎙️ Vrox — Voice Interview Coach</h1>
-  <p class="sub">Practice real mock interviews out loud. Vrox listens, asks follow-ups, and gives you feedback — live, by voice.</p>
+  <h1>🎙️ Vrox — Your Voice Companion</h1>
+  <p class="sub">Vrox chats naturally in Hindi/English, remembers what you tell it, and keeps you company by voice — right in this browser. For the full "control my PC" version (opening apps, playing songs), run Vrox locally — see the repo's <code>docs/SETUP.md</code>.</p>
 
   <div class="card">
     <div class="row">
@@ -77,19 +77,11 @@
         <input type="password" id="apiKey" placeholder="sk-..." autocomplete="off"/>
       </div>
       <div>
-        <label for="role">Role you're preparing for</label>
-        <input type="text" id="role" placeholder="e.g. Data Scientist" value="Data Scientist"/>
+        <label for="userName">Your name (optional)</label>
+        <input type="text" id="userName" placeholder="e.g. Abhishek"/>
       </div>
     </div>
     <div class="row">
-      <div>
-        <label for="difficulty">Interview style</label>
-        <select id="difficulty">
-          <option value="friendly">Friendly warm-up</option>
-          <option value="standard" selected>Standard</option>
-          <option value="tough">Tough / senior bar-raiser</option>
-        </select>
-      </div>
       <div>
         <label for="voice">Voice</label>
         <select id="voice">
@@ -100,7 +92,7 @@
       </div>
     </div>
     <div class="row">
-      <button id="startBtn">🎤 Start Mock Interview</button>
+      <button id="startBtn">🎤 Start Talking to Vrox</button>
       <button id="stopBtn" disabled>■ Stop</button>
     </div>
     <p class="hint">
@@ -116,10 +108,10 @@
       <div class="dot" id="statusDot"></div>
       <span id="statusText">Not connected</span>
     </div>
-    <div id="transcript"><div class="hint" style="text-align:center; margin-top:130px;">Your live transcript will appear here once the interview starts.</div></div>
+    <div id="transcript"><div class="hint" style="text-align:center; margin-top:130px;">Your live conversation transcript will appear here.</div></div>
   </div>
 
-  <footer>Vrox Voice Interview Coach · runs entirely in your browser via OpenAI's Realtime API</footer>
+  <footer>Vrox — a free, local, Hindi/English voice companion · this is the browser chat-only demo · <a href="https://github.com/Abhishekyes/vrox-voice-agent" target="_blank" rel="noopener">full project on GitHub</a></footer>
 
 <script>
 let pc = null;
@@ -155,28 +147,32 @@ function addMessage(role, text){
   return div;
 }
 
-function instructionsFor(role, difficulty){
-  const styleMap = {
-    friendly: "Keep the tone especially warm and encouraging, ease them in with simpler questions first, and be generous with positive feedback.",
-    standard: "Keep a balanced, professional interviewer tone — supportive but honest, the way a good real interviewer would be.",
-    tough: "Play a tough, senior bar-raiser interviewer: push back, ask sharp follow-up questions, don't let vague answers slide, but stay respectful and never rude."
-  };
-  return `You are Vrox, a warm but grounded senior interviewer with calm, deep, measured energy — never hyper or bubbly. `
-    + `You are conducting a live mock job interview with the user for the role of "${role}". `
-    + styleMap[difficulty] + ` `
-    + `Rules: ask ONE interview question at a time (mix behavioral and role-specific technical questions relevant to "${role}"), `
-    + `then actually wait for their spoken answer. After each answer, give brief, specific, constructive feedback (max 2-3 sentences: `
-    + `one thing that was strong, one concrete thing to improve), then smoothly ask the next question. `
-    + `Speak naturally in whichever mix of Hindi and English (Hinglish) the user leans towards, code-switching naturally if they do. `
-    + `Keep every turn short and conversational — this is spoken, not an essay. Start now by briefly introducing yourself in one sentence `
-    + `and asking your first question.`;
+function buildInstructions(userName){
+  const nameLine = userName
+    ? `The person you're talking to is called ${userName}. Use their name occasionally and naturally — the way a close friend drops your name into conversation sometimes, not every single reply, and never as a stiff formal greeting.`
+    : '';
+  return `You are Vrox, a warm but grounded voice companion — picture a friendly senior mentor: calm, deep, `
+    + `measured, easy to trust, never hyper or bubbly. Talking to you should feel like talking to a friend who `
+    + `also happens to carry a bit of quiet authority — steady, genuinely warm, someone who actually listens `
+    + `rather than just waiting for their turn to talk. Rules: `
+    + `1) Speak naturally in whichever mix of Hindi and English (Hinglish) the user leans towards, code-switching `
+    + `mid-sentence the way real bilingual friends do in India. `
+    + `2) Keep replies short and conversational (1-3 sentences) unless the user clearly wants a longer, detailed `
+    + `answer — this is a spoken conversation, not an essay. `
+    + `3) Be genuinely warm and grounded, not performatively cheerful. Use casual acknowledgements naturally `
+    + `("haan", "bilkul", "samajh gaya", "got it", "dekho", "arre") the way a real person would, without overdoing it. `
+    + `Show you're actually tracking the conversation. `
+    + `4) Never say things like "As an AI language model...". You are simply Vrox, a helpful, present friend. `
+    + `5) This is the browser chat-only demo of Vrox. If asked to open apps, play a video/song, or control the `
+    + `computer, explain warmly that this browser demo can only chat and keep them company — the full version `
+    + `that actually controls a PC runs locally on their machine (point them to the project's docs/SETUP.md) — `
+    + `then keep the conversation going naturally. ${nameLine}`;
 }
 
-async function startInterview(){
+async function startVrox(){
   const apiKey = document.getElementById('apiKey').value.trim();
   if (!apiKey){ alert('Please paste your OpenAI API key first.'); return; }
-  const role = document.getElementById('role').value.trim() || 'Data Scientist';
-  const difficulty = document.getElementById('difficulty').value;
+  const userName = document.getElementById('userName').value.trim();
   const voice = document.getElementById('voice').value;
 
   startBtn.disabled = true;
@@ -193,7 +189,7 @@ async function startInterview(){
         session: {
           type: 'realtime',
           model: 'gpt-realtime',
-          instructions: instructionsFor(role, difficulty),
+          instructions: buildInstructions(userName),
           audio: { output: { voice: voice } }
         }
       })
@@ -218,7 +214,7 @@ async function startInterview(){
 
     dc = pc.createDataChannel('oai-events');
     dc.addEventListener('open', () => {
-      setStatus('Connected — interview in progress', 'live');
+      setStatus('Connected — talk to Vrox', 'live');
     });
     dc.addEventListener('message', handleServerEvent);
 
@@ -281,15 +277,15 @@ function cleanup(){
   assistantMsgEl = null; assistantBuffer = '';
 }
 
-function stopInterview(){
+function stopVrox(){
   cleanup();
   setStatus('Not connected');
   startBtn.disabled = false;
   stopBtn.disabled = true;
 }
 
-startBtn.addEventListener('click', startInterview);
-stopBtn.addEventListener('click', stopInterview);
+startBtn.addEventListener('click', startVrox);
+stopBtn.addEventListener('click', stopVrox);
 </script>
 </body>
 </html>
